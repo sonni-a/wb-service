@@ -89,4 +89,4 @@ wb-service/
 ## Скриншоты и видео
 ![](images/screenshot.png)
 
-<video src='https://drive.google.com/file/d/17lTH-0MuuTNS8I9d3ViDL5V_zrRqAm_z/view?usp=sharing' width=180/>
+Ссылка на видео с демонстранцией работы проекта: https://drive.google.com/file/d/17lTH-0MuuTNS8I9d3ViDL5V_zrRqAm_z/view?usp=sharing
