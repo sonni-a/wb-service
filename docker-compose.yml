@@ -1,0 +1,77 @@
+services:
+  db:
+    image: postgres:16
+    container_name: wb-service-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./internal/db/migrations:/docker-entrypoint-initdb.d
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: wb-service-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: wb-service-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CREATE_TOPICS: "orders:1:1"
+
+  service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wb-service-service
+    depends_on:
+      - db
+      - kafka
+      - zookeeper
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+    command: ["./wait-for-it.sh", "kafka:9092", "--timeout=60", "--", "./service"]
+    ports:
+      - "8081:8081"
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./internal/web:/app/internal/web 
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wb-service-producer
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BROKERS: kafka:9092
+    command: ["./wait-for-it.sh", "kafka:9092", "--timeout=60", "--", "./producer"]
+    stdin_open: true
+    tty: true

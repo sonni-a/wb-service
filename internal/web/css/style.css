@@ -1,0 +1,112 @@
+body {
+    margin: 0;
+    padding: 0;
+    background: #f9f8fb;
+    font-family: 'Inter', sans-serif;
+    color: #5a3e85;
+}
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 0 20px;
+}
+
+h1 {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 40px;
+    color: #5a3e85;
+    text-shadow: 0 0 0 transparent;
+}
+
+.neu-input, .neu-btn {
+    width: 100%;
+    padding: 15px 20px;
+    font-size: 16px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    background: #e0d7f7;
+    box-shadow: 5px 5px 12px #b7a6d8,
+                -5px -5px 12px #f5eeff;
+    margin-bottom: 20px;
+}
+
+.neu-btn {
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+    color: #5a3e85;
+}
+
+.neu-btn:hover {
+    box-shadow: 3px 3px 8px #b7a6d8,
+                -3px -3px 8px #f5eeff;
+}
+
+.neu-btn:active {
+    box-shadow: inset 3px 3px 8px #b7a6d8,
+                inset -3px -3px 8px #f5eeff;
+}
+
+.spinner {
+    display: none;
+    text-align: center;
+    font-weight: 600;
+    margin-top: 20px;
+    color: #5a3e85;
+}
+
+.card {
+    background: #e5dbff;
+    border-radius: 25px;
+    padding: 20px;
+    margin-bottom: 25px;
+
+    box-shadow: 8px 8px 18px #b6a7d6,
+                -8px -8px 18px #f7f2ff;
+    
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 10px 10px 20px #b6a7d6,
+                -10px -10px 20px #f7f2ff;
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #5a3e85;
+    border-bottom: 1px solid #c4b4e3;
+    padding-bottom: 5px;
+}
+
+.item {
+    background: transparent;
+    border-radius: 0;
+    padding: 10px 0;
+    margin: 0;
+    border-bottom: 1px solid #b9aee5;
+}
+
+.item:last-child {
+    border-bottom: none;
+}
+
+.label {
+    display: inline-block;
+    min-width: 100px;
+    font-weight: 600;
+    color: #5a3e85;
+    padding: 2px 8px;
+    border-radius: 5px;
+    margin-right: 8px;
+}
+
+.value {
+    color: #5a3e85;
+}

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Order Viewer</title>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+
+    <h1>Order Viewer</h1>
+
+    <input id="orderID" class="neu-input" placeholder="Enter order UID">
+    <button class="neu-btn" onclick="fetchOrder()">Get Order</button>
+
+    <div id="spinner" class="spinner">Loading...</div>
+    <div id="result"></div>
+
+</div>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+/bin/
+*.exe
+*.out
+
+/vendor/
+
+.vscode/
+.idea/
+
+*.env
+
+*.log
+
+docs/
