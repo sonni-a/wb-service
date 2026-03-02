@@ -50,7 +50,7 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_CREATE_TOPICS: "orders:1:1"
+      KAFKA_CREATE_TOPICS: "orders:1:1,orders-dlq:1:1"
 
   service:
     build:

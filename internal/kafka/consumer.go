@@ -79,20 +79,50 @@ func (c *Consumer) Consume(ctx context.Context) error {
 		var order models.Order
 		if err := json.Unmarshal(m.Value, &order); err != nil {
 			log.Printf("Invalid JSON: %v", err)
+			c.sendToDLQ(ctx, m, "invalid JSON")
 			continue
 		}
 
 		if err := order.Validate(); err != nil {
 			log.Printf("Invalid order (%s): %v", order.OrderUID, err)
+			c.sendToDLQ(ctx, m, "validation failed")
 			continue
 		}
 
 		if err := c.svc.CreateOrder(ctx, &order); err != nil {
 			log.Printf("Failed to save order %s: %v", order.OrderUID, err)
+			c.sendToDLQ(ctx, m, "DB write failed")
 			continue
 		}
 
 		log.Printf("Order %s saved successfully", order.OrderUID)
+	}
+}
+
+func (c *Consumer) sendToDLQ(ctx context.Context, msg kafka.Message, reason string) {
+	w := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:  []string{"kafka:9092"},
+		Topic:    "orders-dlq",
+		Balancer: &kafka.LeastBytes{},
+	})
+	defer w.Close()
+
+	payload := map[string]interface{}{
+		"original_key":   string(msg.Key),
+		"original_value": string(msg.Value),
+		"reason":         reason,
+		"time":           time.Now(),
+	}
+	data, _ := json.Marshal(payload)
+
+	if err := w.WriteMessages(ctx, kafka.Message{
+		Key:   msg.Key,
+		Value: data,
+		Time:  time.Now(),
+	}); err != nil {
+		log.Printf("Failed to send to DLQ: %v", err)
+	} else {
+		log.Printf("Message sent to DLQ (key=%s): %s", msg.Key, reason)
 	}
 }
 
