@@ -90,5 +90,14 @@ services:
     stdin_open: true
     tty: true
 
+  lint:
+    build:
+      context: .
+      dockerfile: Dockerfile.lint
+    profiles: ["tools"]
+    volumes:
+      - .:/app
+    command: sh -c "go mod download && golangci-lint run ./..."
+
 volumes:
   postgres_data:

@@ -1,6 +1,6 @@
 module github.com/sonni-a/wb-service
 
-go 1.24.5
+go 1.24.0
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.8.2
