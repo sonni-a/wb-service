@@ -90,6 +90,30 @@ services:
     stdin_open: true
     tty: true
 
+  prometheus:
+    image: prom/prometheus
+    container_name: wb-service-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus:/etc/prometheus
+    depends_on:
+      - service
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: wb-service-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+      
   lint:
     build:
       context: .
@@ -101,3 +125,4 @@ services:
 
 volumes:
   postgres_data:
+  grafana_data:

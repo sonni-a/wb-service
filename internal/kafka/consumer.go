@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/sonni-a/wb-service/internal/metrics"
 	"github.com/sonni-a/wb-service/internal/models"
 	"github.com/sonni-a/wb-service/internal/service"
 )
@@ -79,23 +80,27 @@ func (c *Consumer) Consume(ctx context.Context) error {
 		var order models.Order
 		if err := json.Unmarshal(m.Value, &order); err != nil {
 			log.Printf("Invalid JSON: %v", err)
+			metrics.KafkaProcessingErrorsTotal.Inc()
 			c.sendToDLQ(ctx, m, "invalid JSON")
 			continue
 		}
 
 		if err := order.Validate(); err != nil {
 			log.Printf("Invalid order (%s): %v", order.OrderUID, err)
+			metrics.KafkaProcessingErrorsTotal.Inc()
 			c.sendToDLQ(ctx, m, "validation failed")
 			continue
 		}
 
 		if err := c.svc.CreateOrder(ctx, &order); err != nil {
 			log.Printf("Failed to save order %s: %v", order.OrderUID, err)
+			metrics.KafkaProcessingErrorsTotal.Inc()
 			c.sendToDLQ(ctx, m, "DB write failed")
 			continue
 		}
 
 		log.Printf("Order %s saved successfully", order.OrderUID)
+		metrics.KafkaMessagesProcessedTotal.Inc()
 	}
 }
 
@@ -123,6 +128,7 @@ func (c *Consumer) sendToDLQ(ctx context.Context, msg kafka.Message, reason stri
 		log.Printf("Failed to send to DLQ: %v", err)
 	} else {
 		log.Printf("Message sent to DLQ (key=%s): %s", msg.Key, reason)
+		metrics.KafkaDLQMessagesTotal.Inc()
 	}
 }
 

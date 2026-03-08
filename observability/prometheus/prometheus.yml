@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "wb-service"
+    static_configs:
+      - targets: ["service:8081"]

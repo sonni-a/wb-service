@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"sync"
 
+	"github.com/sonni-a/wb-service/internal/metrics"
 	"github.com/sonni-a/wb-service/internal/models"
 )
 
@@ -39,6 +40,8 @@ func (c *MemoryCache) Get(key string) (*models.Order, bool) {
 	defer c.mu.RUnlock()
 
 	if el, ok := c.items[key]; ok {
+		metrics.CacheHitsTotal.Inc()
+
 		c.mu.RUnlock()
 		c.mu.Lock()
 		c.order.MoveToFront(el)
@@ -46,6 +49,8 @@ func (c *MemoryCache) Get(key string) (*models.Order, bool) {
 		c.mu.RLock()
 		return el.Value.(*cacheEntry).value, true
 	}
+
+	metrics.CacheMissesTotal.Inc()
 	return nil, false
 }
 

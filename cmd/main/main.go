@@ -22,14 +22,18 @@ import (
 	"github.com/sonni-a/wb-service/internal/db"
 	"github.com/sonni-a/wb-service/internal/handlers"
 	"github.com/sonni-a/wb-service/internal/kafka"
+	"github.com/sonni-a/wb-service/internal/metrics"
 	"github.com/sonni-a/wb-service/internal/repository"
 	"github.com/sonni-a/wb-service/internal/service"
 	"github.com/sonni-a/wb-service/internal/shutdown"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func main() {
 	fmt.Println("Starting demo service...")
+	metrics.Init()
 
 	cfg := config.Load()
 
@@ -69,6 +73,8 @@ func main() {
 		_, _ = w.Write([]byte("pong"))
 	})
 
+	mux.Handle("/metrics", promhttp.Handler())
+
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 	mux.Handle("/swagger/doc.json", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
@@ -86,7 +92,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":8081",
-		Handler: mux,
+		Handler: metrics.MetricsMiddleware(mux),
 	}
 
 	go func() {

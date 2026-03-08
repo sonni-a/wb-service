@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sonni-a/wb-service/internal/metrics"
 	"github.com/sonni-a/wb-service/internal/models"
 )
 
@@ -28,6 +30,13 @@ func NewOrderRepository(db *pgxpool.Pool) *OrderRepository {
 }
 
 func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) error {
+	start := time.Now()
+	defer func() {
+		metrics.DBQueryDuration.
+			WithLabelValues("insert_order").
+			Observe(time.Since(start).Seconds())
+	}()
+
 	if err := order.Validate(); err != nil {
 		return fmt.Errorf("order validation failed: %w", err)
 	}
@@ -79,6 +88,13 @@ func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) 
 }
 
 func (r *OrderRepository) GetOrder(ctx context.Context, orderUID string) (*models.Order, error) {
+	start := time.Now()
+	defer func() {
+		metrics.DBQueryDuration.
+			WithLabelValues("get_order").
+			Observe(time.Since(start).Seconds())
+	}()
+
 	order := &models.Order{}
 
 	err := r.db.QueryRow(ctx, GetOrderWithJoinsQuery, orderUID).Scan(
@@ -125,6 +141,13 @@ func (r *OrderRepository) GetOrder(ctx context.Context, orderUID string) (*model
 }
 
 func (r *OrderRepository) GetAllOrders(ctx context.Context) ([]*models.Order, error) {
+	start := time.Now()
+	defer func() {
+		metrics.DBQueryDuration.
+			WithLabelValues("get_all_orders").
+			Observe(time.Since(start).Seconds())
+	}()
+
 	rows, err := r.db.Query(ctx, GetAllOrdersQuery)
 	if err != nil {
 		return nil, fmt.Errorf("query all orders: %w", err)
