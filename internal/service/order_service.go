@@ -30,7 +30,7 @@ func NewOrderService(repo repository.OrderRepo, cache Cache) *OrderService {
 
 func (s *OrderService) CreateOrder(ctx context.Context, order *models.Order) error {
 	if err := s.repo.InsertOrder(ctx, order); err != nil {
-		return err
+		return fmt.Errorf("create order: %w", err)
 	}
 	s.cache.Set(order.OrderUID, order)
 	return nil
@@ -44,7 +44,7 @@ func (s *OrderService) GetOrder(ctx context.Context, orderUID string) (*models.O
 	order, err := s.repo.GetOrder(ctx, orderUID)
 	if err != nil {
 		if errors.Is(err, repository.ErrOrderNotFound) {
-			return nil, fmt.Errorf("order %s not found: %w", orderUID, err)
+			return nil, fmt.Errorf("%s: %w", orderUID, ErrOrderNotFound)
 		}
 		return nil, err
 	}
@@ -62,7 +62,10 @@ func (s *OrderService) LoadCache(ctx context.Context) error {
 	for _, o := range orders {
 		fullOrder, err := s.repo.GetOrder(ctx, o.OrderUID)
 		if err != nil {
-			continue
+			if errors.Is(err, repository.ErrOrderNotFound) {
+				continue
+			}
+			return fmt.Errorf("load cache: %w", err)
 		}
 		s.cache.Set(o.OrderUID, fullOrder)
 	}

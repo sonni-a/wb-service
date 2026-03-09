@@ -113,15 +113,6 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./observability/grafana/provisioning:/etc/grafana/provisioning
-      
-  lint:
-    build:
-      context: .
-      dockerfile: Dockerfile.lint
-    profiles: ["tools"]
-    volumes:
-      - .:/app
-    command: sh -c "go mod download && golangci-lint run ./..."
 
 volumes:
   postgres_data:

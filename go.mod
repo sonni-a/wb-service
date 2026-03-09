@@ -3,9 +3,9 @@ module github.com/sonni-a/wb-service
 go 1.24.0
 
 require (
-	github.com/brianvoe/gofakeit/v7 v7.8.2
+	github.com/brianvoe/gofakeit/v7 v7.14.1
 	github.com/golang/mock v1.6.0
-	github.com/jackc/pgx/v5 v5.7.6
+	github.com/jackc/pgx/v5 v5.8.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/segmentio/kafka-go v0.4.49
 	github.com/swaggo/http-swagger v1.3.4
@@ -34,7 +34,6 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/swaggo/files v1.0.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	golang.org/x/crypto v0.44.0 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sync v0.18.0 // indirect

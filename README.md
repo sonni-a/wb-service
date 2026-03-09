@@ -1,5 +1,7 @@
 # Демонстрационный сервис с Kafka, PostgreSQL, кешем
-Проект реализует обработку заказов через Kafka, сохранение данных в PostgreSQL и работу с кешем.
+Демонстрационный backend-сервис обработки заказов на Go.
+Сервис получает события заказов из Apache Kafka, валидирует данные и сохраняет их в PostgreSQL. Для ускорения чтения используется in-memory кеш с ограничением размера.
+Сервис предоставляет HTTP API для получения заказов, поддерживает мониторинг через Prometheus и Grafana, а также включает обработку ошибок Kafka (DLQ), unit-тесты и контейнеризацию через Docker.
 
 ## Инструкция по запуску
 1. Клонировать репозиторий:
@@ -16,16 +18,57 @@
     ```arduino
     http://localhost:8081
 
+## Установка и запуск линтера
+1. Установка golangci-lint
+   ```bash
+   go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+1. Запуск линтера в корне проекта
+   ```bash
+    golangci-lint run ./...
+
 ## Используемые технологии
-* Go 1.24.5
+### Backend
+* Go 1.24
 * PostgreSQL 16
-* Kafka
+* Apache Kafka
+### Инфраструктура
+* Docker
 * Docker Compose 
+### Тестирование
+* gomock (mockgen)
+### Линтер
+* golangci-lint
+### Observability 
+* Prometheus
+* Grafana
+### Документация
+* Swagger
+### Генерация тестовых данных
+* Gofakeit
+### Frontend (для демонстрации)
 * HTML
-* In-memory кеш с ограничением и удалением элементов при переполнении (map, list.List)
-* gomock (mockgen) - для тестирования
-* Swagger - документация
-* Gofakeit - генерация тестовых данных.
+* CSS
+* JavaScript
+
+## Мониторинг
+### Метрики Prometheus
+* http_requests_total
+* http_request_duration_seconds
+* kafka_messages_processed_total
+* kafka_processing_errors_total
+* kafka_dlq_messages_total
+* cache_hits_total
+* cache_misses_total
+* db_query_duration_seconds
+### Дашборд Grafana
+* HTTP Error Rate
+* DB Query Latency
+* Cache Hit Rate
+* Kafka Errors
+* Kafka Throughput
+* HTTP p95 Latency
+* HTTP Requests Per Second (RPS)
+
 
 ## Схема БД
 ![](images/db-diagram.png)
@@ -43,7 +86,16 @@ wb-service/
 │   │   └── config.go
 │   ├── db/  
 │   │   ├──migrations/
-│   │   │   └── 000001_init_schema.up.sql.go
+│   │   │   ├── 000001_create_orders.up.sql
+│   │   │   ├── 000001_create_orders.down.sql
+│   │   │   ├── 000002_create_delivery.up.sql
+│   │   │   ├── 000002_create_delivery.down.sql
+│   │   │   ├── 000003_create_payment.up.sql
+│   │   │   ├── 000003_create_payment.down.sql
+│   │   │   ├── 000004_create_items.up.sql
+│   │   │   ├── 000004_create_items.down.sql
+│   │   │   ├── 000005_create_items_index.up.sql
+│   │   │   └── 000005_create_items_index.down.sql
 │   │   └── db.go
 │   ├── faker/
 │   │   └── faker.go
@@ -52,17 +104,21 @@ wb-service/
 │   │   └── order_handler_test.go             
 │   ├── kafka/
 │   │   ├── consumer.go
-│   │   └── producer.go               
+│   │   └── producer.go
+│   ├── metrics/
+│   │   ├── metrics.go 
+│   │   └── middleware.go                
 │   ├── models/
 │   │   ├── models.go 
-│   │   └── producer.go  
+│   │   └── validation.go  
 │   ├── repository/
-│   │   ├── erorrs.go 
+│   │   ├── errors.go 
 │   │   ├── order.go 
 │   │   ├── queries.go 
 │   │   └── mock_repository/
 │   │       └── order_mock.go  
 │   ├── service/
+│   │   ├── errors.go 
 │   │   ├── cache.go 
 │   │   ├── order_service.go 
 │   │   ├── order_service_test.go 
@@ -82,6 +138,7 @@ wb-service/
 ├── .env.example
 ├── go.mod
 ├── go.sum
+├── golangci.yml
 └── README.md
 ```
 

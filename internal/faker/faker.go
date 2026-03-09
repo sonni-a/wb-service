@@ -1,6 +1,7 @@
 package faker
 
 import (
+	"log"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -10,7 +11,9 @@ import (
 func ptr[T any](v T) *T { return &v }
 
 func Init() {
-	gofakeit.Seed(time.Now().UnixNano())
+	if err := gofakeit.Seed(time.Now().UnixNano()); err != nil {
+		log.Fatalf("failed to seed faker: %v", err)
+	}
 }
 
 func GenerateFakeOrder() models.Order {

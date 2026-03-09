@@ -1,0 +1,25 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - ineffassign
+    - gosimple
+    - revive
+    - gocyclo
+    - gofmt
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+
+issues:
+  exclude-use-default: false
+
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck

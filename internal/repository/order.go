@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -43,11 +42,11 @@ func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) 
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("start transaction: %w", err)
 	}
+
 	defer tx.Rollback(ctx)
 
-	log.Printf("Parsed order before insert: %+v", order)
 	_, err = tx.Exec(ctx, InsertOrderQuery,
 		order.OrderUID, order.TrackNumber, order.Entry, order.Locale, order.InternalSignature,
 		order.CustomerID, order.DeliveryService, order.ShardKey, order.SmID, order.DateCreated, order.OofShard)
@@ -55,7 +54,6 @@ func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) 
 		return fmt.Errorf("insert order: %w", err)
 	}
 
-	log.Printf("Parsed delivery before insert: %+v", order.Delivery)
 	_, err = tx.Exec(ctx, InsertDeliveryQuery,
 		order.OrderUID, order.Delivery.Name, order.Delivery.Phone, order.Delivery.Zip,
 		order.Delivery.City, order.Delivery.Address, order.Delivery.Region, order.Delivery.Email)
