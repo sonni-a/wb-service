@@ -9,8 +9,9 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o service ./cmd/main/main.go
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o producer ./cmd/producer/producer_main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -o service ./cmd/main/main.go && \
+    go build -o producer ./cmd/producer/producer_main.go
 
 
 FROM alpine:latest
