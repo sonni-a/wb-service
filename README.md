@@ -18,14 +18,6 @@
     ```arduino
     http://localhost:8081
 
-## Установка и запуск линтера
-1. Установка golangci-lint
-   ```bash
-   go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-1. Запуск линтера в корне проекта
-   ```bash
-    golangci-lint run ./...
-
 ## Используемые технологии
 ### Backend
 * Go 1.24
