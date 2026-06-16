@@ -5,18 +5,17 @@ import (
 	"log"
 	"time"
 
-	"github.com/sonni-a/wb-service/internal/faker"
 	"github.com/sonni-a/wb-service/internal/kafka"
 )
 
 func main() {
-	faker.Init()
+	initFaker()
 
 	ctx := context.Background()
 	topic := "orders"
 
 	for i := 0; i < 5; i++ {
-		order := faker.GenerateFakeOrder()
+		order := generateFakeOrder()
 
 		if err := kafka.SendOrder(ctx, topic, &order); err != nil {
 			log.Println("Failed to send order:", err)
