@@ -9,7 +9,6 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/sonni-a/wb-service/internal/models"
-	"github.com/sonni-a/wb-service/internal/repository"
 	"github.com/sonni-a/wb-service/internal/service"
 )
 
@@ -93,7 +92,7 @@ func (h *OrderHandler) GetOrderByUID(w http.ResponseWriter, r *http.Request) {
 
 	order, err := h.service.GetOrder(context.Background(), orderUID)
 	if err != nil {
-		if errors.Is(err, repository.ErrOrderNotFound) {
+		if errors.Is(err, service.ErrOrderNotFound) {
 			http.Error(w, "order not found", http.StatusNotFound)
 			return
 		}

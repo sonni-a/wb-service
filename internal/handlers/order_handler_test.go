@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/sonni-a/wb-service/internal/models"
-	"github.com/sonni-a/wb-service/internal/repository"
+	"github.com/sonni-a/wb-service/internal/service"
 	"github.com/sonni-a/wb-service/internal/service/mock_service"
 )
 
@@ -97,7 +98,7 @@ func TestOrderHandler_GetOrderByUID_NotFound(t *testing.T) {
 
 	mockSvc.EXPECT().
 		GetOrder(context.Background(), "zzz").
-		Return(nil, repository.ErrOrderNotFound)
+		Return(nil, fmt.Errorf("zzz: %w", service.ErrOrderNotFound))
 
 	req := httptest.NewRequest(http.MethodGet, "/order/zzz", nil)
 	w := httptest.NewRecorder()
