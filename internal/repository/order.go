@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sonni-a/wb-service/internal/metrics"
 	"github.com/sonni-a/wb-service/internal/models"
+	"github.com/sonni-a/wb-service/internal/validator"
 )
 
 type OrderRepo interface {
@@ -36,7 +37,7 @@ func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) 
 			Observe(time.Since(start).Seconds())
 	}()
 
-	if err := order.Validate(); err != nil {
+	if err := validator.ValidateOrder(order); err != nil {
 		return fmt.Errorf("order validation failed: %w", err)
 	}
 

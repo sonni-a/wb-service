@@ -11,6 +11,7 @@ import (
 	"github.com/sonni-a/wb-service/internal/metrics"
 	"github.com/sonni-a/wb-service/internal/models"
 	"github.com/sonni-a/wb-service/internal/service"
+	"github.com/sonni-a/wb-service/internal/validator"
 )
 
 type Consumer struct {
@@ -87,7 +88,7 @@ func (c *Consumer) Consume(ctx context.Context) error {
 			continue
 		}
 
-		if err := order.Validate(); err != nil {
+		if err := validator.ValidateOrder(&order); err != nil {
 			log.Printf("Invalid order (%s): %v", order.OrderUID, err)
 			metrics.KafkaProcessingErrorsTotal.Inc()
 			c.sendToDLQ(ctx, m, "validation failed")

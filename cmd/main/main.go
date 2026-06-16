@@ -26,6 +26,7 @@ import (
 	"github.com/sonni-a/wb-service/internal/repository"
 	"github.com/sonni-a/wb-service/internal/service"
 	"github.com/sonni-a/wb-service/internal/shutdown"
+	"github.com/sonni-a/wb-service/internal/web"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -80,12 +81,7 @@ func main() {
 		httpSwagger.URL("/swagger/doc.json"),
 	))
 
-	mux.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("internal/web/css"))))
-	mux.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("internal/web/js"))))
-
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "internal/web/index.html")
-	})
+	web.RegisterRoutes(mux)
 
 	mux.HandleFunc("/order", orderHandler.CreateOrder)
 	mux.HandleFunc("/order/", orderHandler.GetOrderByUID)

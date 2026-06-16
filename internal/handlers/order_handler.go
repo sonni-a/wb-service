@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/sonni-a/wb-service/internal/models"
 	"github.com/sonni-a/wb-service/internal/service"
+	"github.com/sonni-a/wb-service/internal/validator"
 )
 
 type OrderHandler struct {
@@ -41,6 +42,11 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var order models.Order
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if err := validator.ValidateOrder(&order); err != nil {
+		http.Error(w, "invalid order: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 

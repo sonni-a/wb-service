@@ -1,4 +1,4 @@
-package models
+package validator
 
 import (
 	"errors"
@@ -7,15 +7,69 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/sonni-a/wb-service/internal/models"
 )
 
 var (
-	emailRegex = regexp.MustCompile(`^[\w._%+\-]+@[\w.\-]+\.[A-Za-z]{2,}$`)
-	phoneRegex = regexp.MustCompile(`^\+?[0-9][0-9\s\-\(\)]{6,19}$`)
-	zipRegex   = regexp.MustCompile(`^\d{4,10}$`)
+	emailRegex    = regexp.MustCompile(`^[\w._%+\-]+@[\w.\-]+\.[A-Za-z]{2,}$`)
+	phoneRegex    = regexp.MustCompile(`^\+?[0-9][0-9\s\-\(\)]{6,19}$`)
+	zipRegex      = regexp.MustCompile(`^\d{4,10}$`)
+	currencyRegex = regexp.MustCompile(`^[A-Z]{3}$`)
+	providerRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]{2,}$`)
+	bankRegex     = regexp.MustCompile(`^[a-zA-Z0-9\s-]{2,50}$`)
 )
 
-func (d *Delivery) Validate() error {
+func ValidateOrder(o *models.Order) error {
+	if strings.TrimSpace(o.OrderUID) == "" {
+		return errors.New("order_uid cannot be empty")
+	}
+	if strings.TrimSpace(o.TrackNumber) == "" {
+		return errors.New("track_number cannot be empty")
+	}
+	if strings.TrimSpace(o.Entry) == "" {
+		return errors.New("entry cannot be empty")
+	}
+	if strings.TrimSpace(o.Locale) == "" {
+		return errors.New("locale cannot be empty")
+	}
+	if strings.TrimSpace(o.CustomerID) == "" {
+		return errors.New("customer_id cannot be empty")
+	}
+	if strings.TrimSpace(o.DeliveryService) == "" {
+		return errors.New("delivery_service cannot be empty")
+	}
+	if strings.TrimSpace(o.ShardKey) == "" {
+		return errors.New("shardkey cannot be empty")
+	}
+	if o.SmID <= 0 {
+		return errors.New("sm_id must be positive")
+	}
+	if strings.TrimSpace(o.OofShard) == "" {
+		return errors.New("oof_shard cannot be empty")
+	}
+
+	if err := validateDelivery(&o.Delivery); err != nil {
+		return err
+	}
+
+	if err := validatePayment(&o.Payment); err != nil {
+		return err
+	}
+
+	if len(o.Items) == 0 {
+		return errors.New("items cannot be empty")
+	}
+	for i, item := range o.Items {
+		if err := validateItem(&item); err != nil {
+			return errors.New("item[" + strconv.Itoa(i) + "]: " + err.Error())
+		}
+	}
+
+	return nil
+}
+
+func validateDelivery(d *models.Delivery) error {
 	if strings.TrimSpace(d.Name) == "" {
 		return errors.New("delivery name cannot be empty")
 	}
@@ -51,17 +105,7 @@ func (d *Delivery) Validate() error {
 	return nil
 }
 
-var (
-	currencyRegex = regexp.MustCompile(`^[A-Z]{3}$`)
-	providerRegex = regexp.MustCompile(`^[a-zA-Z0-9_-]{2,}$`)
-	bankRegex     = regexp.MustCompile(`^[a-zA-Z0-9\s-]{2,50}$`)
-)
-
-func (p *Payment) Validate() error {
-	if p == nil {
-		return errors.New("payment cannot be nil")
-	}
-
+func validatePayment(p *models.Payment) error {
 	if strings.TrimSpace(p.Transaction) == "" {
 		return errors.New("transaction cannot be empty")
 	}
@@ -101,7 +145,7 @@ func (p *Payment) Validate() error {
 	return nil
 }
 
-func (i *Item) Validate() error {
+func validateItem(i *models.Item) error {
 	if strings.TrimSpace(i.OrderUID) == "" {
 		return errors.New("item order_uid cannot be empty")
 	}
@@ -138,54 +182,5 @@ func (i *Item) Validate() error {
 	if i.Status <= 0 {
 		return fmt.Errorf("item status must be positive, got %d", i.Status)
 	}
-	return nil
-}
-
-func (o *Order) Validate() error {
-	if strings.TrimSpace(o.OrderUID) == "" {
-		return errors.New("order_uid cannot be empty")
-	}
-	if strings.TrimSpace(o.TrackNumber) == "" {
-		return errors.New("track_number cannot be empty")
-	}
-	if strings.TrimSpace(o.Entry) == "" {
-		return errors.New("entry cannot be empty")
-	}
-	if strings.TrimSpace(o.Locale) == "" {
-		return errors.New("locale cannot be empty")
-	}
-	if strings.TrimSpace(o.CustomerID) == "" {
-		return errors.New("customer_id cannot be empty")
-	}
-	if strings.TrimSpace(o.DeliveryService) == "" {
-		return errors.New("delivery_service cannot be empty")
-	}
-	if strings.TrimSpace(o.ShardKey) == "" {
-		return errors.New("shardkey cannot be empty")
-	}
-	if o.SmID <= 0 {
-		return errors.New("sm_id must be positive")
-	}
-	if strings.TrimSpace(o.OofShard) == "" {
-		return errors.New("oof_shard cannot be empty")
-	}
-
-	if err := o.Delivery.Validate(); err != nil {
-		return err
-	}
-
-	if err := o.Payment.Validate(); err != nil {
-		return err
-	}
-
-	if len(o.Items) == 0 {
-		return errors.New("items cannot be empty")
-	}
-	for i, item := range o.Items {
-		if err := item.Validate(); err != nil {
-			return errors.New("item[" + strconv.Itoa(i) + "]: " + err.Error())
-		}
-	}
-
 	return nil
 }

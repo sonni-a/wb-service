@@ -24,7 +24,6 @@ RUN curl -o wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-
 
 COPY --from=builder /app/service .
 COPY --from=builder /app/producer .
-COPY --from=builder /app/internal/web ./internal/web
 COPY --from=builder /app/docs ./docs
 
 RUN chmod +x ./service ./producer

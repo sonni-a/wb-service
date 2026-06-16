@@ -16,6 +16,64 @@ import (
 	"github.com/sonni-a/wb-service/internal/service/mock_service"
 )
 
+func validTestOrder() models.Order {
+	orderUID := "550e8400-e29b-41d4-a716-446655440000"
+	track := "WBIL12345678"
+	empty := ""
+
+	return models.Order{
+		OrderUID:          orderUID,
+		TrackNumber:       track,
+		Entry:             "WBIL",
+		Locale:            "en",
+		InternalSignature: &empty,
+		CustomerID:        "customer-1",
+		DeliveryService:   "meest",
+		ShardKey:          "1",
+		SmID:              1,
+		OofShard:          "1",
+		Delivery: models.Delivery{
+			OrderUID: orderUID,
+			Name:     "John Doe",
+			Phone:    "+12345678901",
+			Zip:      "12345",
+			City:     "Moscow",
+			Address:  "Red Square 1",
+			Region:   "Moscow",
+			Email:    "john@example.com",
+		},
+		Payment: models.Payment{
+			OrderUID:     orderUID,
+			Transaction:  orderUID,
+			RequestID:    &empty,
+			Currency:     "USD",
+			Provider:     "wbpay",
+			Amount:       1000,
+			PaymentDt:    1700000000,
+			Bank:         "AlphaBank",
+			DeliveryCost: 100,
+			GoodsTotal:   900,
+			CustomFee:    0,
+		},
+		Items: []models.Item{
+			{
+				OrderUID:    orderUID,
+				ChrtID:      123456,
+				TrackNumber: track,
+				Price:       500,
+				RID:         "rid-1",
+				Name:        "T-Shirt",
+				Sale:        0,
+				Size:        "M",
+				TotalPrice:  500,
+				NmID:        1000001,
+				Brand:       "Brand",
+				Status:      202,
+			},
+		},
+	}
+}
+
 func TestOrderHandler_CreateOrder_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -23,7 +81,7 @@ func TestOrderHandler_CreateOrder_Success(t *testing.T) {
 	mockSvc := mock_service.NewMockOrderServiceInterface(ctrl)
 	handler := NewOrderHandler(mockSvc)
 
-	order := models.Order{OrderUID: "123"}
+	order := validTestOrder()
 	body, _ := json.Marshal(order)
 
 	req := httptest.NewRequest(http.MethodPost, "/order", bytes.NewReader(body))
@@ -38,6 +96,26 @@ func TestOrderHandler_CreateOrder_Success(t *testing.T) {
 	resp := w.Result()
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("expected 201, got %d", resp.StatusCode)
+	}
+}
+
+func TestOrderHandler_CreateOrder_InvalidOrder(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSvc := mock_service.NewMockOrderServiceInterface(ctrl)
+	handler := NewOrderHandler(mockSvc)
+
+	order := models.Order{OrderUID: "123"}
+	body, _ := json.Marshal(order)
+
+	req := httptest.NewRequest(http.MethodPost, "/order", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	handler.CreateOrder(w, req)
+
+	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid order")
 	}
 }
 
