@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -50,7 +49,7 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.service.CreateOrder(context.Background(), &order)
+	err := h.service.CreateOrder(r.Context(), &order)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -96,7 +95,7 @@ func (h *OrderHandler) GetOrderByUID(w http.ResponseWriter, r *http.Request) {
 	}
 	orderUID := parts[2]
 
-	order, err := h.service.GetOrder(context.Background(), orderUID)
+	order, err := h.service.GetOrder(r.Context(), orderUID)
 	if err != nil {
 		if errors.Is(err, service.ErrOrderNotFound) {
 			http.Error(w, "order not found", http.StatusNotFound)

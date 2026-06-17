@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -146,7 +145,7 @@ func TestOrderHandler_GetOrderByUID_Success(t *testing.T) {
 	order := &models.Order{OrderUID: "abc"}
 
 	mockSvc.EXPECT().
-		GetOrder(context.Background(), "abc").
+		GetOrder(gomock.Any(), "abc").
 		Return(order, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/order/abc", nil)
@@ -175,7 +174,7 @@ func TestOrderHandler_GetOrderByUID_NotFound(t *testing.T) {
 	handler := NewOrderHandler(mockSvc)
 
 	mockSvc.EXPECT().
-		GetOrder(context.Background(), "zzz").
+		GetOrder(gomock.Any(), "zzz").
 		Return(nil, fmt.Errorf("zzz: %w", service.ErrOrderNotFound))
 
 	req := httptest.NewRequest(http.MethodGet, "/order/zzz", nil)
