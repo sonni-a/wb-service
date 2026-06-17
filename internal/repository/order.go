@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sonni-a/wb-service/internal/metrics"
 	"github.com/sonni-a/wb-service/internal/models"
@@ -52,14 +53,14 @@ func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) 
 		order.OrderUID, order.TrackNumber, order.Entry, order.Locale, order.InternalSignature,
 		order.CustomerID, order.DeliveryService, order.ShardKey, order.SmID, order.DateCreated, order.OofShard)
 	if err != nil {
-		return fmt.Errorf("insert order: %w", err)
+		return mapInsertError(err, "insert order")
 	}
 
 	_, err = tx.Exec(ctx, InsertDeliveryQuery,
 		order.OrderUID, order.Delivery.Name, order.Delivery.Phone, order.Delivery.Zip,
 		order.Delivery.City, order.Delivery.Address, order.Delivery.Region, order.Delivery.Email)
 	if err != nil {
-		return fmt.Errorf("insert delivery: %w", err)
+		return mapInsertError(err, "insert delivery")
 	}
 
 	_, err = tx.Exec(ctx, InsertPaymentQuery,
@@ -67,7 +68,7 @@ func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) 
 		order.Payment.Provider, order.Payment.Amount, order.Payment.PaymentDt, order.Payment.Bank,
 		order.Payment.DeliveryCost, order.Payment.GoodsTotal, order.Payment.CustomFee)
 	if err != nil {
-		return fmt.Errorf("insert payment: %w", err)
+		return mapInsertError(err, "insert payment")
 	}
 
 	for _, item := range order.Items {
@@ -75,7 +76,7 @@ func (r *OrderRepository) InsertOrder(ctx context.Context, order *models.Order) 
 			order.OrderUID, item.ChrtID, item.TrackNumber, item.Price, item.RID, item.Name,
 			item.Sale, item.Size, item.TotalPrice, item.NmID, item.Brand, item.Status)
 		if err != nil {
-			return fmt.Errorf("insert item: %w", err)
+			return mapInsertError(err, "insert item")
 		}
 	}
 
@@ -206,4 +207,12 @@ func (r *OrderRepository) GetAllOrders(ctx context.Context) ([]*models.Order, er
 	}
 
 	return orders, nil
+}
+
+func mapInsertError(err error, operation string) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return ErrOrderAlreadyExists
+	}
+	return fmt.Errorf("%s: %w", operation, err)
 }

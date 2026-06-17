@@ -46,17 +46,16 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	err := h.service.CreateOrder(r.Context(), &order)
 	if err != nil {
+		if errors.Is(err, service.ErrOrderAlreadyExists) {
+			http.Error(w, "order already exists", http.StatusConflict)
+			return
+		}
+
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
-			switch pgErr.Code {
-			case "23505":
-				http.Error(w, "order already exists", http.StatusConflict)
-				return
-			default:
-				log.Printf("database error on create order: %v", err)
-				http.Error(w, "internal server error", http.StatusInternalServerError)
-				return
-			}
+			log.Printf("database error on create order: %v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
 		}
 
 		log.Printf("failed to create order: %v", err)

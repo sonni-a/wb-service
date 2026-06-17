@@ -101,6 +101,12 @@ func (c *Consumer) Consume(ctx context.Context) error {
 		}
 
 		if err := c.svc.CreateOrder(ctx, &order); err != nil {
+			if errors.Is(err, service.ErrOrderAlreadyExists) {
+				log.Printf("Order %s already exists, skipping duplicate message", order.OrderUID)
+				metrics.KafkaMessagesProcessedTotal.Inc()
+				continue
+			}
+
 			log.Printf("Failed to save order %s: %v", order.OrderUID, err)
 			metrics.KafkaProcessingErrorsTotal.Inc()
 			c.sendToDLQ(ctx, m, "DB write failed")

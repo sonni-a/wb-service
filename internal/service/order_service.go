@@ -30,6 +30,13 @@ func NewOrderService(repo repository.OrderRepo, cache Cache) *OrderService {
 
 func (s *OrderService) CreateOrder(ctx context.Context, order *models.Order) error {
 	if err := s.repo.InsertOrder(ctx, order); err != nil {
+		if errors.Is(err, repository.ErrOrderAlreadyExists) {
+			existing, getErr := s.repo.GetOrder(ctx, order.OrderUID)
+			if getErr == nil {
+				s.cache.Set(order.OrderUID, existing)
+			}
+			return ErrOrderAlreadyExists
+		}
 		return fmt.Errorf("create order: %w", err)
 	}
 	s.cache.Set(order.OrderUID, order)

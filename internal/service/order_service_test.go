@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/sonni-a/wb-service/internal/models"
+	"github.com/sonni-a/wb-service/internal/repository"
 	"github.com/sonni-a/wb-service/internal/repository/mock_repository"
 )
 
@@ -63,6 +65,35 @@ func TestOrderService_CreateOrder(t *testing.T) {
 		t.Fatalf("expected order in cache")
 	}
 	if cached != order {
+		t.Fatalf("cached order mismatch")
+	}
+}
+
+func TestOrderService_CreateOrder_Duplicate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockRepo := mock_repository.NewMockOrderRepo(ctrl)
+	cache := NewMemoryCache(2)
+	service := NewOrderService(mockRepo, cache)
+
+	ctx := context.Background()
+	order := &models.Order{OrderUID: "abc"}
+	existing := &models.Order{OrderUID: "abc", TrackNumber: "saved"}
+
+	mockRepo.EXPECT().InsertOrder(ctx, order).Return(repository.ErrOrderAlreadyExists)
+	mockRepo.EXPECT().GetOrder(ctx, "abc").Return(existing, nil)
+
+	err := service.CreateOrder(ctx, order)
+	if !errors.Is(err, ErrOrderAlreadyExists) {
+		t.Fatalf("expected ErrOrderAlreadyExists, got %v", err)
+	}
+
+	cached, ok := cache.Get("abc")
+	if !ok {
+		t.Fatalf("expected existing order in cache")
+	}
+	if cached != existing {
 		t.Fatalf("cached order mismatch")
 	}
 }
