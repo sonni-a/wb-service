@@ -10,9 +10,9 @@ import (
 	"github.com/sonni-a/wb-service/internal/models"
 )
 
-func SendOrder(ctx context.Context, topic string, order *models.Order) error {
+func SendOrder(ctx context.Context, brokers []string, topic string, order *models.Order) error {
 	w := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"kafka:9092"},
+		Brokers:  brokers,
 		Topic:    topic,
 		Balancer: &kafka.LeastBytes{},
 	})

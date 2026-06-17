@@ -15,8 +15,9 @@ import (
 )
 
 type Consumer struct {
-	reader *kafka.Reader
-	svc    service.OrderServiceInterface
+	reader    *kafka.Reader
+	dlqWriter *kafka.Writer
+	svc       service.OrderServiceInterface
 }
 
 func NewConsumer(brokers []string, topic, groupID string, svc service.OrderServiceInterface) *Consumer {
@@ -26,9 +27,16 @@ func NewConsumer(brokers []string, topic, groupID string, svc service.OrderServi
 		GroupID: groupID,
 	})
 
+	dlqWriter := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:  brokers,
+		Topic:    "orders-dlq",
+		Balancer: &kafka.LeastBytes{},
+	})
+
 	return &Consumer{
-		reader: r,
-		svc:    svc,
+		reader:    r,
+		dlqWriter: dlqWriter,
+		svc:       svc,
 	}
 }
 
@@ -105,22 +113,19 @@ func (c *Consumer) Consume(ctx context.Context) error {
 }
 
 func (c *Consumer) sendToDLQ(ctx context.Context, msg kafka.Message, reason string) {
-	w := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:  []string{"kafka:9092"},
-		Topic:    "orders-dlq",
-		Balancer: &kafka.LeastBytes{},
-	})
-	defer w.Close()
-
 	payload := map[string]interface{}{
 		"original_key":   string(msg.Key),
 		"original_value": string(msg.Value),
 		"reason":         reason,
 		"time":           time.Now(),
 	}
-	data, _ := json.Marshal(payload)
+	data, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Failed to marshal DLQ payload: %v", err)
+		return
+	}
 
-	if err := w.WriteMessages(ctx, kafka.Message{
+	if err := c.dlqWriter.WriteMessages(ctx, kafka.Message{
 		Key:   msg.Key,
 		Value: data,
 		Time:  time.Now(),
@@ -133,5 +138,8 @@ func (c *Consumer) sendToDLQ(ctx context.Context, msg kafka.Message, reason stri
 }
 
 func (c *Consumer) Close() error {
+	if err := c.dlqWriter.Close(); err != nil {
+		return err
+	}
 	return c.reader.Close()
 }
