@@ -59,7 +59,11 @@ func main() {
 		"order-service-group",
 		orderSvc,
 	)
-	defer consumer.Close()
+	defer func() {
+		if err := consumer.Close(); err != nil {
+			log.Println("Error closing Kafka consumer:", err)
+		}
+	}()
 
 	consumerCtx, consumerCancel := context.WithCancel(context.Background())
 	go func() {
@@ -99,7 +103,4 @@ func main() {
 	}()
 
 	shutdown.GracefulShutdown(srv, consumerCancel)
-	if err := consumer.Close(); err != nil {
-		log.Println("Error closing Kafka consumer:", err)
-	}
 }
