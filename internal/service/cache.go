@@ -16,7 +16,7 @@ type Cache interface {
 }
 
 type MemoryCache struct {
-	mu      sync.RWMutex
+	mu      sync.Mutex
 	items   map[string]*list.Element
 	order   *list.List
 	maxSize int
@@ -36,17 +36,12 @@ func NewMemoryCache(maxSize int) Cache {
 }
 
 func (c *MemoryCache) Get(key string) (*models.Order, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
 	if el, ok := c.items[key]; ok {
 		metrics.CacheHitsTotal.Inc()
-
-		c.mu.RUnlock()
-		c.mu.Lock()
 		c.order.MoveToFront(el)
-		c.mu.Unlock()
-		c.mu.RLock()
 		return el.Value.(*cacheEntry).value, true
 	}
 
