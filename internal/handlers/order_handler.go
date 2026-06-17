@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -52,12 +53,14 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "order already exists", http.StatusConflict)
 				return
 			default:
-				http.Error(w, "database error: "+pgErr.Message, http.StatusInternalServerError)
+				log.Printf("database error on create order: %v", err)
+				http.Error(w, "internal server error", http.StatusInternalServerError)
 				return
 			}
 		}
 
-		http.Error(w, "failed to insert order: "+err.Error(), http.StatusInternalServerError)
+		log.Printf("failed to create order: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -90,7 +93,8 @@ func (h *OrderHandler) GetOrderByUID(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		http.Error(w, "internal server error: "+err.Error(), http.StatusInternalServerError)
+		log.Printf("failed to get order %s: %v", orderUID, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
