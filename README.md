@@ -1,7 +1,7 @@
 # Демонстрационный сервис с Kafka, PostgreSQL, кешем
 Демонстрационный backend-сервис обработки заказов на Go.
-Сервис получает события заказов из Apache Kafka, валидирует данные и сохраняет их в PostgreSQL. Для ускорения чтения используется in-memory кеш с ограничением размера.
-Сервис предоставляет HTTP API для получения заказов, поддерживает мониторинг через Prometheus и Grafana, а также включает обработку ошибок Kafka (DLQ), unit-тесты и контейнеризацию через Docker.
+Сервис получает события заказов из Apache Kafka, валидирует данные и сохраняет их в PostgreSQL. Для ускорения чтения используется in-memory LRU-кеш с ограничением размера.
+Сервис предоставляет HTTP API для получения заказов, поддерживает мониторинг через Prometheus и Grafana, а также включает обработку ошибок Kafka (DLQ), идемпотентность повторных сообщений, unit-тесты и контейнеризацию через Docker.
 
 ## Инструкция по запуску
 1. Клонировать репозиторий:
@@ -26,6 +26,7 @@
 ### Инфраструктура
 * Docker
 * Docker Compose 
+* golang-migrate
 ### Тестирование
 * gomock (mockgen)
 ### Линтер
@@ -72,25 +73,13 @@ wb-service/
 │   ├── main/                
 │   │   └── main.go
 │   └── producer/       
-│       └── producer_main.go
+│       ├── producer_main.go
+│       └── faker.go
 ├── internal/
 │   ├── config/  
 │   │   └── config.go
 │   ├── db/  
-│   │   ├──migrations/
-│   │   │   ├── 000001_create_orders.up.sql
-│   │   │   ├── 000001_create_orders.down.sql
-│   │   │   ├── 000002_create_delivery.up.sql
-│   │   │   ├── 000002_create_delivery.down.sql
-│   │   │   ├── 000003_create_payment.up.sql
-│   │   │   ├── 000003_create_payment.down.sql
-│   │   │   ├── 000004_create_items.up.sql
-│   │   │   ├── 000004_create_items.down.sql
-│   │   │   ├── 000005_create_items_index.up.sql
-│   │   │   └── 000005_create_items_index.down.sql
 │   │   └── db.go
-│   ├── faker/
-│   │   └── faker.go
 │   ├── handlers/   
 │   │   ├── order_handler.go
 │   │   └── order_handler_test.go             
@@ -101,8 +90,7 @@ wb-service/
 │   │   ├── metrics.go 
 │   │   └── middleware.go                
 │   ├── models/
-│   │   ├── models.go 
-│   │   └── validation.go  
+│   │   └── models.go 
 │   ├── repository/
 │   │   ├── errors.go 
 │   │   ├── order.go 
@@ -117,13 +105,27 @@ wb-service/
 │   │   └── mock_service/
 │   │       └── mock_order_service.go  
 │   ├── shutdown/ 
-│   │   └── shutdown.go       
+│   │   └── shutdown.go
+│   ├── validator/
+│   │   └── order.go
 │   └── web/     
-│   │   ├── css/
-│   │   │    └── style.css 
-│   │   ├── js/
-│   │   │    └── main.js  
-│   │   └── index.html    
+│       ├── static.go
+│       ├── css/
+│       │    └── style.css 
+│       ├── js/
+│       │    └── main.js  
+│       └── index.html    
+├── migrations/
+│   ├── 000001_create_orders.up.sql
+│   ├── 000001_create_orders.down.sql
+│   ├── 000002_create_delivery.up.sql
+│   ├── 000002_create_delivery.down.sql
+│   ├── 000003_create_payment.up.sql
+│   ├── 000003_create_payment.down.sql
+│   ├── 000004_create_items.up.sql
+│   ├── 000004_create_items.down.sql
+│   ├── 000005_create_items_index.up.sql
+│   └── 000005_create_items_index.down.sql
 ├── docs/                    
 ├── Dockerfile
 ├── docker-compose.yml
