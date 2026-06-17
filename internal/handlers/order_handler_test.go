@@ -149,6 +149,7 @@ func TestOrderHandler_GetOrderByUID_Success(t *testing.T) {
 		Return(order, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/order/abc", nil)
+	req.SetPathValue("uid", "abc")
 	w := httptest.NewRecorder()
 
 	handler.GetOrderByUID(w, req)
@@ -178,6 +179,7 @@ func TestOrderHandler_GetOrderByUID_NotFound(t *testing.T) {
 		Return(nil, fmt.Errorf("zzz: %w", service.ErrOrderNotFound))
 
 	req := httptest.NewRequest(http.MethodGet, "/order/zzz", nil)
+	req.SetPathValue("uid", "zzz")
 	w := httptest.NewRecorder()
 
 	handler.GetOrderByUID(w, req)

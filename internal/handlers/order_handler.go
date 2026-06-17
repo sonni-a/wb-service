@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/sonni-a/wb-service/internal/models"
@@ -33,11 +32,6 @@ func NewOrderHandler(svc service.OrderServiceInterface) *OrderHandler {
 // @Failure      500    {string}  string  "internal error"
 // @Router       /order [post]
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var order models.Order
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -83,17 +77,11 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 // @Failure      500  {string}  string  "internal error"
 // @Router       /order/{uid} [get]
 func (h *OrderHandler) GetOrderByUID(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 3 || parts[2] == "" {
+	orderUID := r.PathValue("uid")
+	if orderUID == "" {
 		http.Error(w, "missing order_uid", http.StatusBadRequest)
 		return
 	}
-	orderUID := parts[2]
 
 	order, err := h.service.GetOrder(r.Context(), orderUID)
 	if err != nil {

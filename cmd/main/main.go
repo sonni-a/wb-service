@@ -87,8 +87,8 @@ func main() {
 
 	web.RegisterRoutes(mux)
 
-	mux.HandleFunc("/order", orderHandler.CreateOrder)
-	mux.HandleFunc("/order/", orderHandler.GetOrderByUID)
+	mux.HandleFunc("POST /order", orderHandler.CreateOrder)
+	mux.HandleFunc("GET /order/{uid}", orderHandler.GetOrderByUID)
 
 	srv := &http.Server{
 		Addr:    ":8081",
