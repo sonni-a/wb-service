@@ -147,23 +147,62 @@ func (r *OrderRepository) GetAllOrders(ctx context.Context) ([]*models.Order, er
 			Observe(time.Since(start).Seconds())
 	}()
 
-	rows, err := r.db.Query(ctx, GetAllOrdersQuery)
+	rows, err := r.db.Query(ctx, GetAllOrdersWithJoinsQuery)
 	if err != nil {
-		return nil, fmt.Errorf("query all orders: %w", err)
+		return nil, fmt.Errorf("query all orders with joins: %w", err)
 	}
 	defer rows.Close()
 
-	var orders []*models.Order
+	orders := make([]*models.Order, 0)
+	ordersByUID := make(map[string]*models.Order)
+
 	for rows.Next() {
-		order := models.Order{}
+		order := &models.Order{}
 		if err := rows.Scan(
 			&order.OrderUID, &order.TrackNumber, &order.Entry, &order.Locale,
 			&order.InternalSignature, &order.CustomerID, &order.DeliveryService,
 			&order.ShardKey, &order.SmID, &order.DateCreated, &order.OofShard,
+			&order.Delivery.Name, &order.Delivery.Phone, &order.Delivery.Zip,
+			&order.Delivery.City, &order.Delivery.Address, &order.Delivery.Region,
+			&order.Delivery.Email,
+			&order.Payment.Transaction, &order.Payment.RequestID, &order.Payment.Currency,
+			&order.Payment.Provider, &order.Payment.Amount, &order.Payment.PaymentDt,
+			&order.Payment.Bank, &order.Payment.DeliveryCost, &order.Payment.GoodsTotal,
+			&order.Payment.CustomFee,
 		); err != nil {
 			return nil, fmt.Errorf("scan order row: %w", err)
 		}
-		orders = append(orders, &order)
+
+		order.Delivery.OrderUID = order.OrderUID
+		order.Payment.OrderUID = order.OrderUID
+		orders = append(orders, order)
+		ordersByUID[order.OrderUID] = order
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate orders: %w", err)
+	}
+
+	itemRows, err := r.db.Query(ctx, GetAllItemsQuery)
+	if err != nil {
+		return nil, fmt.Errorf("query all items: %w", err)
+	}
+	defer itemRows.Close()
+
+	for itemRows.Next() {
+		var item models.Item
+		if err := itemRows.Scan(
+			&item.OrderUID, &item.ChrtID, &item.TrackNumber, &item.Price, &item.RID, &item.Name,
+			&item.Sale, &item.Size, &item.TotalPrice, &item.NmID, &item.Brand, &item.Status,
+		); err != nil {
+			return nil, fmt.Errorf("scan item row: %w", err)
+		}
+
+		if order, ok := ordersByUID[item.OrderUID]; ok {
+			order.Items = append(order.Items, item)
+		}
+	}
+	if err := itemRows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate items: %w", err)
 	}
 
 	return orders, nil

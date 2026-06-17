@@ -56,18 +56,11 @@ func (s *OrderService) GetOrder(ctx context.Context, orderUID string) (*models.O
 func (s *OrderService) LoadCache(ctx context.Context) error {
 	orders, err := s.repo.GetAllOrders(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("load cache: %w", err)
 	}
 
-	for _, o := range orders {
-		fullOrder, err := s.repo.GetOrder(ctx, o.OrderUID)
-		if err != nil {
-			if errors.Is(err, repository.ErrOrderNotFound) {
-				continue
-			}
-			return fmt.Errorf("load cache: %w", err)
-		}
-		s.cache.Set(o.OrderUID, fullOrder)
+	for _, order := range orders {
+		s.cache.Set(order.OrderUID, order)
 	}
 
 	return nil
