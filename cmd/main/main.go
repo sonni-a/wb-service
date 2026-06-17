@@ -81,9 +81,6 @@ func main() {
 	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
-	mux.Handle("/swagger/doc.json", httpSwagger.Handler(
-		httpSwagger.URL("/swagger/doc.json"),
-	))
 
 	web.RegisterRoutes(mux)
 
