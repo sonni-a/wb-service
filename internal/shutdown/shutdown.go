@@ -10,17 +10,25 @@ import (
 	"time"
 )
 
-func GracefulShutdown(server *http.Server, cancelFuncs ...func()) {
+func GracefulShutdown(server *http.Server, serverErr <-chan error, cancelFuncs ...func()) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-	log.Println("Shutting down server...")
+	defer signal.Stop(quit)
+
+	select {
+	case <-quit:
+		log.Println("Shutting down server...")
+	case err := <-serverErr:
+		if err != nil {
+			log.Printf("HTTP server stopped unexpectedly: %v", err)
+		}
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server forced to shutdown:", err)
+		log.Printf("Server shutdown error: %v", err)
 	}
 
 	for _, cancelFunc := range cancelFuncs {

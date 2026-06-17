@@ -92,12 +92,15 @@ func main() {
 		Handler: metrics.MetricsMiddleware(mux),
 	}
 
+	serverErr := make(chan error, 1)
+
 	go func() {
 		log.Println("HTTP server started at :8081")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatal("ListenAndServe:", err)
+			log.Printf("ListenAndServe error: %v", err)
+			serverErr <- err
 		}
 	}()
 
-	shutdown.GracefulShutdown(srv, consumerCancel)
+	shutdown.GracefulShutdown(srv, serverErr, consumerCancel)
 }
