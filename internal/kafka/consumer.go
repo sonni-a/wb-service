@@ -47,9 +47,6 @@ func (c *Consumer) Consume(ctx context.Context) error {
 		cancel()
 
 		if err == nil {
-			if err := c.reader.SetOffset(kafka.FirstOffset); err != nil {
-				log.Printf("failed to set Kafka offset: %v", err)
-			}
 			log.Println("Kafka consumer ready.")
 			break
 		}
